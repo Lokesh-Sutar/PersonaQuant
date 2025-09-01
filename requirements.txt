@@ -1,0 +1,8 @@
+agno
+requests
+feedparser
+yfinance
+praw
+python-dotenv
+schedule
+google-genai
