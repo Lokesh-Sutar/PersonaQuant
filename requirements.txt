@@ -1,6 +1,10 @@
-requests
-feedparser
-yfinance
-praw
-python-dotenv
-vaderSentiment
+# Core dependencies
+requests>=2.31.0
+feedparser>=6.0.10
+yfinance>=0.2.18
+praw>=7.7.1
+python-dotenv>=1.0.0
+vaderSentiment>=3.3.2
+
+# Type checking (optional but recommended for development)
+mypy>=1.5.0
