@@ -1,27 +1,50 @@
 import sqlite3
 import json
+from typing import Dict, List, Any, Optional
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 from datetime import datetime, timedelta
-
+from pathlib import Path
 import sys
-import os
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
+
+# Add project root to path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from data.news.news_collector import collect_news_for_ticker
 from data.social_media.social_collector import collect_social_for_ticker
 
 analyzer = SentimentIntensityAnalyzer()
 
-def analyze_sentiment(text):
-    """Analyze sentiment of text using VADER"""
+def analyze_sentiment(text: Optional[str]) -> float:
+    """Analyze sentiment of text using VADER sentiment analyzer.
+    
+    Args:
+        text: Input text to analyze. Can be None or empty.
+        
+    Returns:
+        Sentiment score between -1 (most negative) and 1 (most positive).
+        Returns 0.0 for empty/None text.
+    """
     if not text:
         return 0.0
     
     scores = analyzer.polarity_scores(text)
-    return scores['compound']  # Returns -1 to 1
+    return scores['compound']
 
-def get_news_sentiment(ticker, days=7):
-    """Get sentiment from news database with top positive/negative articles"""
+def get_news_sentiment(ticker: str, days: int = 7) -> Dict[str, Any]:
+    """Retrieve and analyze sentiment from news articles for a given ticker.
+    
+    Args:
+        ticker: Stock ticker symbol (e.g., 'AAPL', 'GOOGL').
+        days: Number of days to look back for news articles.
+        
+    Returns:
+        Dictionary containing:
+        - count: Number of articles analyzed
+        - sentiment: Average sentiment score (-1 to 1)
+        - top_positive: List of most positive articles
+        - top_negative: List of most negative articles
+        - error: Error message if database operation fails
+    """
     db_path = "data/news/news.db"
     
     try:
@@ -82,8 +105,19 @@ def get_news_sentiment(ticker, days=7):
     except Exception as e:
         return {"count": 0, "sentiment": 0.0, "top_positive": [], "top_negative": [], "error": str(e)}
 
-def get_social_sentiment(ticker, days=7):
-    """Get sentiment from social media database"""
+def get_social_sentiment(ticker: str, days: int = 7) -> Dict[str, Any]:
+    """Retrieve and analyze sentiment from social media posts for a given ticker.
+    
+    Args:
+        ticker: Stock ticker symbol (e.g., 'AAPL', 'GOOGL').
+        days: Number of days to look back for social media posts.
+        
+    Returns:
+        Dictionary containing:
+        - count: Number of posts analyzed
+        - sentiment: Average sentiment score (-1 to 1)
+        - error: Error message if database operation fails
+    """
     db_path = "data/social_media/social.db"
     
     try:
@@ -119,8 +153,24 @@ def get_social_sentiment(ticker, days=7):
     except Exception as e:
         return {"count": 0, "sentiment": 0.0, "error": str(e)}
 
-def get_sentiment_score(ticker, days=7):
-    """Main function to get sentiment score for a ticker"""
+def get_sentiment_score(ticker: str, days: int = 7) -> str:
+    """Generate comprehensive sentiment analysis for a stock ticker.
+    
+    Collects fresh news and social media data, then analyzes sentiment
+    from both sources to provide an overall sentiment assessment.
+    
+    Args:
+        ticker: Stock ticker symbol (e.g., 'AAPL', 'GOOGL').
+        days: Number of days to analyze historical data.
+        
+    Returns:
+        JSON string containing complete sentiment analysis including:
+        - Overall sentiment score and label
+        - News sentiment breakdown
+        - Social media sentiment breakdown
+        - Top positive/negative news articles
+        - Total data points analyzed
+    """
     
     # Generating Latest Data
     collect_news_for_ticker(ticker)
@@ -179,5 +229,5 @@ def get_sentiment_score(ticker, days=7):
 
 
 if __name__ == "__main__":
-    result = get_sentiment_score('GOOGL', days=7)
+    result = get_sentiment_score('AAPL', days=7)
     print(result)
